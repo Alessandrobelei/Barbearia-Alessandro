@@ -11,7 +11,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1234";
 function readData(){ return JSON.parse(fs.readFileSync(DATA,"utf8")); }
 function saveData(d){ fs.writeFileSync(DATA, JSON.stringify(d,null,2),"utf8"); }
 function send(res,status,obj,headers={}) {
-  const body = typeof obj === "string" ? obj : JSON.stringify(obj);
+  const body = Buffer.isBuffer(obj) ? obj : (typeof obj === "string" ? obj : JSON.stringify(obj));
   res.writeHead(status, {"Content-Type": typeof obj==="string" ? "text/plain; charset=utf-8" : "application/json; charset=utf-8", ...headers});
   res.end(body);
 }
