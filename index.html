@@ -1,0 +1,49 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Barbearia Alessandro</title><style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,system-ui;background:#07101c;color:#f7f9fc}header{position:sticky;top:0;background:#0b1422ee;backdrop-filter:blur(14px);padding:16px 5%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ffffff15;z-index:5}.logo{font-weight:900}.btn{border:0;border-radius:12px;padding:12px 17px;font-weight:800;cursor:pointer}.primary{background:#45b8ff;color:#03101a}.gold{background:#f4c95d;color:#171207}.container{width:min(1100px,90%);margin:auto}.hero{padding:90px 0 60px;background:radial-gradient(circle at 20% 0,#45b8ff22,transparent 35%)}h1{font-size:clamp(2.7rem,7vw,5.2rem);line-height:.98;margin:10px 0;letter-spacing:-3px}h1 span{color:#45b8ff}p{color:#aebbc9;line-height:1.6}.actions{display:flex;gap:10px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:30px 0 70px}.card{background:#101d2d;border:1px solid #ffffff10;border-radius:20px;padding:22px}.price{font-size:1.5rem;font-weight:900;color:#f4c95d}.promo{background:#132338;border:1px solid #f4c95d33;border-radius:22px;padding:25px;margin:20px 0 70px}.modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;padding:15px;z-index:10}.modal.open{display:grid}.box{width:min(520px,100%);background:#0d1929;border:1px solid #ffffff14;border-radius:22px;padding:23px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:block;margin:12px 0 6px;font-size:.85rem;font-weight:800}select,input{width:100%;padding:13px;border-radius:11px;border:1px solid #ffffff15;background:#07111f;color:white}.full{grid-column:1/-1}.close{float:right;background:#ffffff10;color:white}.summary{margin:15px 0;padding:13px;border-radius:12px;background:#45b8ff12;color:#dbe7f3}@media(max-width:700px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.full{grid-column:auto}}
+</style></head><body>
+<header><div class="logo" id="logo">BARBEARIA ALESSANDRO</div><button class="btn gold" onclick="openModal()">Agendar</button></header>
+<section class="hero"><div class="container"><div style="color:#45b8ff;font-weight:900">ATENDIMENTO COM HORÁRIO MARCADO</div><h1>Seu estilo começa com um <span>bom corte.</span></h1><p>Corte, barba, sobrancelha e pomadas. Escolha seu dia e horário e envie o agendamento pelo WhatsApp.</p><div class="actions"><button class="btn primary" onclick="openModal()">✂️ Agendar meu horário</button><a class="btn" style="color:white;border:1px solid #ffffff18" href="#servicos">Ver serviços</a></div></div></section>
+<main class="container"><h2 id="servicos">Serviços</h2><div class="grid" id="services"></div><div class="promo"><h2>🔥 Promoções</h2><div id="promos"></div></div><h2>Horários</h2><div class="grid"><div class="card"><b>Segunda a sexta</b><p id="week"></p></div><div class="card"><b>Sábado e domingo</b><p id="weekend"></p></div><div class="card"><b>WhatsApp</b><p id="phone"></p></div></div></main>
+<div class="modal" id="modal"><div class="box"><button class="btn close" onclick="closeModal()">×</button><h2>Agendar horário</h2><p>Escolha dia, horário e serviço.</p><div class="row"><div><label>Dia</label><select id="dia"></select></div><div><label>Horário</label><select id="hora"></select></div><div class="full"><label>Serviço</label><select id="servico"></select></div><div class="full"><label>Nome (opcional)</label><input id="nome" placeholder="Seu nome"></div></div><div class="summary" id="summary">Selecione os dados.</div><button class="btn primary" style="width:100%" onclick="agendar()">Enviar para WhatsApp</button></div></div>
+<script>
+let cfg=null;
+const $=id=>document.getElementById(id);
+async function load(){cfg=await (await fetch('/api/config')).json(); render();}
+function money(v){return 'R$ '+Number(v).toFixed(0)}
+function render(){
+ $('logo').textContent=cfg.barbearia.nome;
+ $('phone').textContent=fmtPhone(cfg.barbearia.whatsapp);
+ $('week').textContent=cfg.horarios.semana.inicio+' — '+cfg.horarios.semana.fim;
+ $('weekend').textContent=cfg.horarios.fimSemana.inicio+' — '+cfg.horarios.fimSemana.fim;
+ $('services').innerHTML=cfg.servicos.map(s=>`<div class="card"><h3>${s.nome}</h3><p>Atendimento com horário marcado.</p><div class="price">${money(s.preco)}</div></div>`).join('');
+ $('promos').innerHTML=cfg.promocoes.map(p=>`<div style="padding:10px 0;border-bottom:1px solid #ffffff12"><b>${p.titulo}</b><p>${p.texto}</p></div>`).join('');
+ fillForm(); updateHours();
+}
+function fmtPhone(x){let n=x.replace(/^55/,'');return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`}
+function fillForm(){
+ $('dia').innerHTML='<option value="">Selecione</option>'+['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'].map(x=>`<option>${x}</option>`).join('');
+ $('servico').innerHTML='<option value="">Selecione</option>'+cfg.servicos.map(s=>`<option>${s.nome} — ${money(s.preco)}</option>`).join('');
+}
+function times(a,b){let x=[],[h1]=a.split(':').map(Number),[h2]=b.split(':').map(Number);for(let h=h1;h<=h2;h++)x.push(String(h).padStart(2,'0')+':00');return x}
+async function updateHours(){
+ if(!$('dia').value){$('hora').innerHTML='<option>Selecione</option>';return}
+ let wk=['Sábado','Domingo'].includes($('dia').value)?cfg.horarios.fimSemana:cfg.horarios.semana;
+ let hours=times(wk.inicio,wk.fim);
+ let taken=(cfg.agendamentos||[]).filter(a=>a.dia===$('dia').value&&a.status!=='cancelado').map(a=>a.hora);
+ $('hora').innerHTML='<option value="">Selecione</option>'+hours.map(h=>`<option ${taken.includes(h)?'disabled':''} value="${h}">${h}${taken.includes(h)?' — ocupado':''}</option>`).join('');
+ summary();
+}
+function summary(){if($('dia').value&&$('hora').value&&$('servico').value)$('summary').innerHTML=`<b>${$('dia').value}</b> às <b>${$('hora').value}</b><br>${$('servico').value}`;else $('summary').textContent='Selecione os dados.'}
+function openModal(){ $('modal').classList.add('open'); fillForm(); updateHours() }
+function closeModal(){ $('modal').classList.remove('open') }
+async function agendar(){
+ if(!$('dia').value||!$('hora').value||!$('servico').value)return alert('Selecione dia, horário e serviço.');
+ const payload={nome:$('nome').value,dia:$('dia').value,hora:$('hora').value,servico:$('servico').value};
+ const r=await fetch('/api/agendamentos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+ const j=await r.json(); if(!r.ok)return alert(j.error||'Não foi possível agendar.');
+ const msg=`Olá, Barbearia Alessandro!%0A%0AQuero agendar:%0A📅 ${payload.dia}%0A🕐 ${payload.hora}%0A✂️ ${payload.servico}${payload.nome?`%0A👤 ${payload.nome}`:''}%0A%0AAguardo confirmação.`;
+ window.open(`https://wa.me/${cfg.barbearia.whatsapp}?text=${msg}`,'_blank'); closeModal(); load();
+}
+$('dia').addEventListener('change',updateHours);$('hora').addEventListener('change',summary);$('servico').addEventListener('change',summary);$('nome').addEventListener('input',summary);
+load(); setInterval(load,5000);
+</script></body></html>

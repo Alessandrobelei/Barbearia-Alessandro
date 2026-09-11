@@ -1,0 +1,63 @@
+{
+  "barbearia": {
+    "nome": "BARBEARIA ALESSANDRO",
+    "whatsapp": "5514998288661",
+    "corte": 25,
+    "sobrancelha": 15,
+    "barba": 20,
+    "domiciliar": 10,
+    "pomada": 35,
+    "pomadaPromo": 30
+  },
+  "horarios": {
+    "semana": {
+      "inicio": "17:00",
+      "fim": "21:00"
+    },
+    "fimSemana": {
+      "inicio": "13:00",
+      "fim": "21:00"
+    }
+  },
+  "servicos": [
+    {
+      "nome": "Corte",
+      "preco": 25
+    },
+    {
+      "nome": "Barba",
+      "preco": 20
+    },
+    {
+      "nome": "Sobrancelha",
+      "preco": 15
+    },
+    {
+      "nome": "Corte domiciliar",
+      "preco": 35
+    },
+    {
+      "nome": "Pomada",
+      "preco": 30
+    }
+  ],
+  "promocoes": [
+    {
+      "titulo": "Dia do Cliente",
+      "texto": "Terça e quinta: cabelo + barba + sobrancelha por apenas R$ 50."
+    },
+    {
+      "titulo": "Corte + Pomada",
+      "texto": "R$ 5 de desconto na sobrancelha."
+    },
+    {
+      "titulo": "Corte + 2 Pomadas",
+      "texto": "Sobrancelha grátis."
+    },
+    {
+      "titulo": "Corte + Barba + Pomada",
+      "texto": "Sobrancelha grátis."
+    }
+  ],
+  "agendamentos": []
+}

@@ -1,0 +1,41 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel — Barbearia Alessandro</title><style>
+body{margin:0;font-family:Arial;background:#07101c;color:#f6f8fb}.wrap{width:min(1000px,92%);margin:30px auto}.card{background:#101d2d;border:1px solid #ffffff12;border-radius:18px;padding:20px;margin:15px 0}input,textarea,button{font:inherit}input,textarea{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;background:#07111f;color:white;border:1px solid #ffffff18}label{font-size:.82rem;font-weight:800;display:block;margin:10px 0 6px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:800;cursor:pointer}.primary{background:#45b8ff}.danger{background:#ff6464}.muted{color:#aebbc9}.item{border-top:1px solid #ffffff12;padding:13px 0;display:flex;justify-content:space-between;gap:15px;align-items:center}.login{max-width:380px;margin:90px auto}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<div id="login" class="card login"><h1>Painel</h1><p class="muted">Barbearia Alessandro</p><label>Senha</label><input id="pass" type="password" placeholder="Senha do administrador"><button class="btn primary" style="margin-top:12px;width:100%" onclick="login()">Entrar</button></div>
+<div id="app" style="display:none"><h1>⚙️ Painel da Barbearia</h1><p class="muted">As alterações são salvas no servidor e o site público atualiza automaticamente.</p>
+<div class="card"><h2>Informações</h2><div class="grid"><div><label>Nome</label><input id="nome"></div><div><label>WhatsApp (somente números)</label><input id="wa"></div><div><label>Corte</label><input id="corte" type="number"></div><div><label>Barba</label><input id="barba" type="number"></div><div><label>Sobrancelha</label><input id="sob" type="number"></div><div><label>Taxa domiciliar</label><input id="dom" type="number"></div><div><label>Pomada normal</label><input id="pom" type="number"></div><div><label>Pomada promocional</label><input id="pomPromo" type="number"></div></div></div>
+<div class="card"><h2>Horários</h2><div class="grid"><div><label>Semana — início</label><input id="si"></div><div><label>Semana — fim</label><input id="sf"></div><div><label>Fim de semana — início</label><input id="fi"></div><div><label>Fim de semana — fim</label><input id="ff"></div></div></div>
+<div class="card"><h2>Serviços</h2><div id="services"></div><button class="btn primary" onclick="addService()">+ Adicionar serviço</button></div>
+<div class="card"><h2>Promoções</h2><div id="promos"></div><button class="btn primary" onclick="addPromo()">+ Adicionar promoção</button></div>
+<div class="card"><h2>Agendamentos</h2><div id="appointments"></div></div>
+<button class="btn primary" onclick="save()">💾 Salvar alterações</button> <button class="btn" onclick="location.href='/'">Ver site</button> <button class="btn" onclick="logout()">Sair</button>
+<div id="status" class="muted" style="margin-top:12px"></div></div></div>
+<script>
+let token='',cfg;
+const $=id=>document.getElementById(id);
+async function login(){let r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('pass').value})});let j=await r.json();if(!r.ok)return alert(j.error);token=j.token;$('login').style.display='none';$('app').style.display='block';load()}
+async function load(){cfg=await (await fetch('/api/config')).json();fill()}
+function val(id){return $(id).value}
+function fill(){
+ $('nome').value=cfg.barbearia.nome;$('wa').value=cfg.barbearia.whatsapp;$('corte').value=cfg.barbearia.corte;$('barba').value=cfg.barbearia.barba;$('sob').value=cfg.barbearia.sobrancelha;$('dom').value=cfg.barbearia.domiciliar;$('pom').value=cfg.barbearia.pomada;$('pomPromo').value=cfg.barbearia.pomadaPromo;
+ $('si').value=cfg.horarios.semana.inicio;$('sf').value=cfg.horarios.semana.fim;$('fi').value=cfg.horarios.fimSemana.inicio;$('ff').value=cfg.horarios.fimSemana.fim;
+ $('services').innerHTML=cfg.servicos.map((s,i)=>`<div class="item"><div style="flex:1"><input id="sn${i}" value="${s.nome}"></div><div style="width:120px"><input id="sp${i}" type="number" value="${s.preco}"></div><button class="btn danger" onclick="delService(${i})">Excluir</button></div>`).join('');
+ $('promos').innerHTML=cfg.promocoes.map((p,i)=>`<div class="item"><div style="flex:1"><input id="pt${i}" value="${p.titulo}"><textarea id="px${i}" rows="2">${p.texto}</textarea></div><button class="btn danger" onclick="delPromo(${i})">Excluir</button></div>`).join('');
+ $('appointments').innerHTML=(cfg.agendamentos||[]).slice().reverse().map(a=>`<div class="item"><div><b>${a.nome}</b> — ${a.dia} ${a.hora}<br><span class="muted">${a.servico}</span></div><button class="btn danger" onclick="delAppointment('${a.id}')">Excluir</button></div>`).join('')||'<p class="muted">Nenhum agendamento.</p>';
+}
+function addService(){cfg.servicos.push({nome:'Novo serviço',preco:0});fill()}
+function delService(i){cfg.servicos.splice(i,1);fill()}
+function addPromo(){cfg.promocoes.push({titulo:'Nova promoção',texto:''});fill()}
+function delPromo(i){cfg.promocoes.splice(i,1);fill()}
+async function save(){
+ cfg.barbearia={nome:val('nome'),whatsapp:val('wa'),corte:+val('corte'),barba:+val('barba'),sobrancelha:+val('sob'),domiciliar:+val('dom'),pomada:+val('pom'),pomadaPromo:+val('pomPromo')};
+ cfg.horarios={semana:{inicio:val('si'),fim:val('sf')},fimSemana:{inicio:val('fi'),fim:val('ff')}};
+ cfg.servicos=cfg.servicos.map((s,i)=>({nome:$('sn'+i).value,preco:+$('sp'+i).value}));
+ cfg.promocoes=cfg.promocoes.map((p,i)=>({titulo:$('pt'+i).value,texto:$('px'+i).value}));
+ let r=await fetch('/api/config',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({barbearia:cfg.barbearia,horarios:cfg.horarios,servicos:cfg.servicos,promocoes:cfg.promocoes})});
+ if(!r.ok)return alert('Não foi possível salvar.');cfg=await r.json();fill();$('status').textContent='✓ Salvo. O site público será atualizado automaticamente.';setTimeout(()=>$('status').textContent='',2500)
+}
+async function delAppointment(id){await fetch('/api/agendamentos/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+token}});load()}
+async function logout(){await fetch('/api/logout',{method:'POST',headers:{Authorization:'Bearer '+token}});location.reload()}
+load
+</script></body></html>
