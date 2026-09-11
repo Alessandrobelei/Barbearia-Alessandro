@@ -47,8 +47,11 @@ function saveData(d){
   fs.renameSync(tmp,DATA);
 }
 function send(res,status,obj,headers={}){
-  const body=typeof obj==='string'?obj:JSON.stringify(obj);
-  res.writeHead(status,{'Content-Type':typeof obj==='string'?'text/plain; charset=utf-8':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'SAMEORIGIN','Referrer-Policy':'strict-origin-when-cross-origin',...headers});
+  const isBuf=Buffer.isBuffer(obj);
+  const isStr=typeof obj==='string';
+  const body=(isBuf||isStr)?obj:JSON.stringify(obj);
+  const defaultType=isBuf?'application/octet-stream':(isStr?'text/plain; charset=utf-8':'application/json; charset=utf-8');
+  res.writeHead(status,{'Content-Type':defaultType,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'SAMEORIGIN','Referrer-Policy':'strict-origin-when-cross-origin',...headers});
   res.end(body);
 }
 function parseBody(req){
@@ -88,7 +91,13 @@ function api(req,res){
     const data=readData();
     const weekday=d.getDay(); const h=(weekday===0||weekday===6)?data.horarios.fimSemana:data.horarios.semana;
     const booked=data.agendamentos.filter(a=>a.status!=='cancelado' && (a.data===date || (!a.data && a.dia===dayLabel(date)))).map(a=>a.hora);
-    return send(res,200,{date,day:dayLabel(date),open:weekday!==0||true,openHours:h,booked:[...new Set(booked)]});
+    const slots=[];
+    for(let m=minutes(h.inicio);m<minutes(h.fim);m+=30){
+      const hh=String(Math.floor(m/60)).padStart(2,'0');
+      const mm=String(m%60).padStart(2,'0');
+      slots.push(`${hh}:${mm}`);
+    }
+    return send(res,200,{date,day:dayLabel(date),open:true,openHours:h,horarios:slots,slots,booked:[...new Set(booked)]});
   }
   if(url.pathname==='/api/login' && req.method==='POST') return parseBody(req).then(b=>{
     const ip=req.socket.remoteAddress||'unknown'; const now=Date.now();
