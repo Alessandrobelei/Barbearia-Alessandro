@@ -1,49 +1,269 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Barbearia Alessandro</title><style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,system-ui;background:#07101c;color:#f7f9fc}header{position:sticky;top:0;background:#0b1422ee;backdrop-filter:blur(14px);padding:16px 5%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ffffff15;z-index:5}.logo{font-weight:900}.btn{border:0;border-radius:12px;padding:12px 17px;font-weight:800;cursor:pointer}.primary{background:#45b8ff;color:#03101a}.gold{background:#f4c95d;color:#171207}.container{width:min(1100px,90%);margin:auto}.hero{padding:90px 0 60px;background:radial-gradient(circle at 20% 0,#45b8ff22,transparent 35%)}h1{font-size:clamp(2.7rem,7vw,5.2rem);line-height:.98;margin:10px 0;letter-spacing:-3px}h1 span{color:#45b8ff}p{color:#aebbc9;line-height:1.6}.actions{display:flex;gap:10px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:30px 0 70px}.card{background:#101d2d;border:1px solid #ffffff10;border-radius:20px;padding:22px}.price{font-size:1.5rem;font-weight:900;color:#f4c95d}.promo{background:#132338;border:1px solid #f4c95d33;border-radius:22px;padding:25px;margin:20px 0 70px}.modal{position:fixed;inset:0;background:#000b;display:none;place-items:center;padding:15px;z-index:10}.modal.open{display:grid}.box{width:min(520px,100%);background:#0d1929;border:1px solid #ffffff14;border-radius:22px;padding:23px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:block;margin:12px 0 6px;font-size:.85rem;font-weight:800}select,input{width:100%;padding:13px;border-radius:11px;border:1px solid #ffffff15;background:#07111f;color:white}.full{grid-column:1/-1}.close{float:right;background:#ffffff10;color:white}.summary{margin:15px 0;padding:13px;border-radius:12px;background:#45b8ff12;color:#dbe7f3}@media(max-width:700px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}.full{grid-column:auto}}
-</style></head><body>
-<header><div class="logo" id="logo">BARBEARIA ALESSANDRO</div><button class="btn gold" onclick="openModal()">Agendar</button></header>
-<section class="hero"><div class="container"><div style="color:#45b8ff;font-weight:900">ATENDIMENTO COM HORÁRIO MARCADO</div><h1>Seu estilo começa com um <span>bom corte.</span></h1><p>Corte, barba, sobrancelha e pomadas. Escolha seu dia e horário e envie o agendamento pelo WhatsApp.</p><div class="actions"><button class="btn primary" onclick="openModal()">✂️ Agendar meu horário</button><a class="btn" style="color:white;border:1px solid #ffffff18" href="#servicos">Ver serviços</a></div></div></section>
-<main class="container"><h2 id="servicos">Serviços</h2><div class="grid" id="services"></div><div class="promo"><h2>🔥 Promoções</h2><div id="promos"></div></div><h2>Horários</h2><div class="grid"><div class="card"><b>Segunda a sexta</b><p id="week"></p></div><div class="card"><b>Sábado e domingo</b><p id="weekend"></p></div><div class="card"><b>WhatsApp</b><p id="phone"></p></div></div></main>
-<div class="modal" id="modal"><div class="box"><button class="btn close" onclick="closeModal()">×</button><h2>Agendar horário</h2><p>Escolha dia, horário e serviço.</p><div class="row"><div><label>Dia</label><select id="dia"></select></div><div><label>Horário</label><select id="hora"></select></div><div class="full"><label>Serviço</label><select id="servico"></select></div><div class="full"><label>Nome (opcional)</label><input id="nome" placeholder="Seu nome"></div></div><div class="summary" id="summary">Selecione os dados.</div><button class="btn primary" style="width:100%" onclick="agendar()">Enviar para WhatsApp</button></div></div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="Barbearia Alessandro — cortes, barba, sobrancelha e pomadas. Agende seu horário online.">
+<title>Barbearia Alessandro</title>
+<style>
+:root{
+  --bg:#07101c;--bg2:#0d1726;--card:#101d2d;--card2:#142338;
+  --text:#f5f8fc;--muted:#a9b6c7;--blue:#45b8ff;--blue2:#168de2;
+  --gold:#f4c95d;--line:rgba(255,255,255,.09);--ok:#37d39a;
+  --shadow:0 24px 70px rgba(0,0,0,.34);--radius:22px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:
+radial-gradient(circle at 15% 0%,rgba(69,184,255,.14),transparent 30%),
+radial-gradient(circle at 90% 10%,rgba(244,201,93,.10),transparent 25%),var(--bg);
+color:var(--text);line-height:1.55;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button,select{font:inherit}
+.container{width:min(1120px,92%);margin:auto}
+header{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(7,16,28,.76);backdrop-filter:blur(18px);border-bottom:1px solid transparent;transition:.25s}
+header.scrolled{border-color:var(--line);box-shadow:0 10px 35px rgba(0,0,0,.2)}
+.nav{height:76px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.logo{font-weight:950;letter-spacing:.7px;font-size:1.08rem;display:flex;align-items:center;gap:10px}
+.logo-mark{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--gold));color:#06101b;font-weight:1000;box-shadow:0 8px 25px rgba(69,184,255,.22)}
+.navlinks{display:flex;align-items:center;gap:24px;color:#c6d2e1;font-size:.94rem}
+.navlinks a:hover{color:white}
+.btn{border:0;cursor:pointer;border-radius:13px;padding:12px 17px;font-weight:850;transition:.2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#2498e9);color:#03101a;box-shadow:0 12px 30px rgba(69,184,255,.2)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#e8ad2e);color:#181207}
+.btn-ghost{border:1px solid var(--line);background:rgba(255,255,255,.035);color:white}
+.hero{padding:145px 0 80px;min-height:690px;display:grid;align-items:center;position:relative}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:55px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(69,184,255,.24);background:rgba(69,184,255,.08);padding:8px 12px;border-radius:999px;color:#9fddff;font-size:.84rem;font-weight:800;margin-bottom:18px}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 14px var(--ok)}
+h1{font-size:clamp(2.7rem,6vw,5.2rem);line-height:.98;letter-spacing:-3px;max-width:750px}
+h1 span{background:linear-gradient(90deg,#fff,var(--blue),var(--gold));-webkit-background-clip:text;color:transparent}
+.hero p{color:var(--muted);font-size:1.08rem;max-width:620px;margin:22px 0 28px}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.stats{display:flex;gap:25px;flex-wrap:wrap;margin-top:32px}
+.stat strong{font-size:1.35rem;display:block}.stat small{color:var(--muted)}
+.hero-card{background:linear-gradient(145deg,rgba(20,35,56,.94),rgba(10,19,32,.94));border:1px solid var(--line);border-radius:28px;padding:28px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero-card:before{content:"";position:absolute;width:190px;height:190px;border-radius:50%;background:rgba(69,184,255,.12);filter:blur(4px);right:-65px;top:-75px}
+.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.card-top b{font-size:1.1rem}.live{color:#9cf2ce;font-size:.8rem;font-weight:800}
+.price-big{font-size:3.5rem;font-weight:950;letter-spacing:-2px}.price-big small{font-size:1rem;color:var(--muted);letter-spacing:0}
+.mini-list{display:grid;gap:10px;margin:22px 0}
+.mini-item{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);color:#d9e2ed}
+.mini-item span:last-child{font-weight:900;color:var(--gold)}
+section{padding:82px 0}.section-head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:30px}
+.eyebrow{color:var(--blue);font-weight:900;font-size:.78rem;text-transform:uppercase;letter-spacing:1.8px}
+h2{font-size:clamp(2rem,4vw,3rem);line-height:1.05;letter-spacing:-1.5px;margin-top:7px}
+.section-head p{color:var(--muted);max-width:520px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.service{background:linear-gradient(160deg,var(--card),rgba(13,23,38,.9));border:1px solid var(--line);border-radius:var(--radius);padding:24px;position:relative;transition:.25s}
+.service:hover{transform:translateY(-5px);border-color:rgba(69,184,255,.28);box-shadow:0 18px 45px rgba(0,0,0,.25)}
+.icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(69,184,255,.1);font-size:1.35rem;margin-bottom:18px}
+.service h3{font-size:1.16rem}.service p{color:var(--muted);font-size:.91rem;margin:7px 0 18px}
+.price{font-size:1.55rem;font-weight:950;color:var(--gold)}
+.promo{background:linear-gradient(135deg,rgba(244,201,93,.12),rgba(69,184,255,.08));border:1px solid rgba(244,201,93,.22);border-radius:28px;padding:30px;display:grid;grid-template-columns:1fr auto;gap:25px;align-items:center}
+.promo h3{font-size:1.55rem}.promo p{color:#d5deea;margin-top:8px}.promo strong{color:var(--gold)}
+.promo-list{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}.pill{border:1px solid var(--line);background:rgba(255,255,255,.035);padding:8px 11px;border-radius:999px;color:#dce7f3;font-size:.84rem}
+.schedule{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;justify-content:space-between}.day b{color:#dce7f3}.day span{color:var(--gold);font-weight:900}
+.home{display:grid;grid-template-columns:1fr 1fr;gap:18px}.home-box{padding:27px;border-radius:24px;border:1px solid var(--line);background:var(--card)}
+.home-box h3{font-size:1.4rem}.home-box p{color:var(--muted);margin:9px 0 20px}
+footer{border-top:1px solid var(--line);padding:35px 0 100px;color:var(--muted)}
+.footer-grid{display:flex;justify-content:space-between;gap:25px;flex-wrap:wrap}.footer-brand{color:white;font-weight:900}
+.floating{position:fixed;right:18px;bottom:18px;z-index:40}
+.floating .btn{border-radius:999px;padding:14px 18px}
+.overlay{position:fixed;inset:0;background:rgba(2,7,13,.78);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:18px;z-index:100}
+.overlay.open{display:flex}
+.modal{width:min(560px,100%);background:#0d1929;border:1px solid var(--line);border-radius:25px;box-shadow:0 35px 100px rgba(0,0,0,.55);padding:25px;animation:pop .2s ease}
+@keyframes pop{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:20px}
+.modal-head h3{font-size:1.55rem}.modal-head p{color:var(--muted);font-size:.88rem}
+.close{border:1px solid var(--line);background:rgba(255,255,255,.04);color:white;width:38px;height:38px;border-radius:11px;cursor:pointer;font-size:1.2rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.field.full{grid-column:1/-1}
+label{display:block;font-size:.82rem;font-weight:800;color:#cdd9e7;margin:0 0 7px}
+select,.input{width:100%;padding:13px 12px;border-radius:12px;border:1px solid var(--line);background:#091321;color:white;outline:none}
+select:focus,.input:focus{border-color:rgba(69,184,255,.55)}
+.summary{margin:16px 0;padding:15px;border-radius:14px;background:rgba(69,184,255,.07);border:1px solid rgba(69,184,255,.13);color:#dce7f3}
+.summary b{color:white}
+.modal-actions{display:flex;gap:10px}.modal-actions .btn{flex:1}
+.toast{position:fixed;left:50%;bottom:25px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#122235;border:1px solid var(--line);padding:12px 16px;border-radius:12px;z-index:150;transition:.25s}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:850px){.navlinks{display:none}.hero-grid,.home{grid-template-columns:1fr}.hero{padding-top:125px}.cards{grid-template-columns:1fr 1fr}.promo{grid-template-columns:1fr}.section-head{display:block}.section-head p{margin-top:12px}}
+@media(max-width:580px){.nav{height:68px}.logo{font-size:.95rem}.logo-mark{width:35px;height:35px}.hero{padding:112px 0 55px;min-height:auto}h1{letter-spacing:-2px}.cards,.schedule,.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.stats{gap:17px}.hero-card{padding:22px}.price-big{font-size:3rem}section{padding:58px 0}.promo{padding:22px}.floating{right:12px;bottom:12px}.floating .btn{padding:12px 15px}.modal{padding:19px}.modal-actions{flex-direction:column}}
+</style>
+</head>
+<body>
+<header id="header">
+  <div class="container nav">
+    <a class="logo" href="#inicio"><span class="logo-mark">A</span> BARBEARIA ALESSANDRO</a>
+    <nav class="navlinks">
+      <a href="#servicos">Serviços</a><a href="#promocoes">Promoções</a><a href="#horarios">Horários</a>
+    </nav>
+    <button class="btn btn-gold" onclick="abrirAgendamento()">Agendar</button>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="inicio">
+  <div class="container hero-grid">
+    <div>
+      <div class="badge"><i></i> Atendimento com horário marcado</div>
+      <h1>Seu estilo começa com um <span>bom corte.</span></h1>
+      <p>Barbearia Alessandro: corte, barba, sobrancelha e pomadas com atendimento direto e preço justo. Escolha seu horário em poucos cliques.</p>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="abrirAgendamento()">✂️ Agendar meu horário</button>
+        <a class="btn btn-ghost" href="#servicos">Ver serviços</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong>R$25</strong><small>Corte</small></div>
+        <div class="stat"><strong>R$20</strong><small>Barba</small></div>
+        <div class="stat"><strong>R$15</strong><small>Sobrancelha</small></div>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="card-top"><b>Preço em destaque</b><span class="live">● Atendimento</span></div>
+      <div class="eyebrow">Corte + acabamento</div>
+      <div class="price-big">R$25 <small>/ corte</small></div>
+      <div class="mini-list">
+        <div class="mini-item"><span>✂️ Corte</span><span>R$25</span></div>
+        <div class="mini-item"><span>🪒 Barba</span><span>R$20</span></div>
+        <div class="mini-item"><span>✨ Sobrancelha</span><span>R$15</span></div>
+        <div class="mini-item"><span>🏠 Domiciliar</span><span>+R$10</span></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="abrirAgendamento()">Escolher dia e horário →</button>
+    </div>
+  </div>
+</section>
+
+<section id="servicos">
+<div class="container">
+  <div class="section-head"><div><div class="eyebrow">Tabela de preços</div><h2>Serviços</h2></div><p>Escolha o serviço que deseja e depois selecione o melhor horário no botão “Agendar”.</p></div>
+  <div class="cards">
+    <article class="service"><div class="icon">✂️</div><h3>Corte</h3><p>Seu corte do jeito que você gosta, com acabamento.</p><div class="price">R$ 25</div></article>
+    <article class="service"><div class="icon">🪒</div><h3>Barba</h3><p>Barba alinhada e acabamento para completar o visual.</p><div class="price">R$ 20</div></article>
+    <article class="service"><div class="icon">✨</div><h3>Sobrancelha</h3><p>Acabamento limpo e alinhado.</p><div class="price">R$ 15</div></article>
+    <article class="service"><div class="icon">🏠</div><h3>Corte domiciliar</h3><p>Para atendimento em casa, acrescenta-se uma taxa.</p><div class="price">+ R$ 10</div></article>
+    <article class="service"><div class="icon">🧴</div><h3>Pomada normal</h3><p>Produto para finalizar e modelar seu penteado.</p><div class="price">R$ 35</div></article>
+    <article class="service"><div class="icon">🔥</div><h3>Pomada promocional</h3><p>Oferta especial por tempo promocional.</p><div class="price">R$ 30</div></article>
+  </div>
+</div>
+</section>
+
+<section id="promocoes">
+<div class="container">
+  <div class="section-head"><div><div class="eyebrow">Ofertas</div><h2>Promoções</h2></div></div>
+  <div class="promo">
+    <div>
+      <h3>🔥 Dia do Cliente — terça e quinta</h3>
+      <p><strong>Cabelo + barba + sobrancelha por apenas R$ 50.</strong> Aproveite para sair com o visual completo.</p>
+      <div class="promo-list"><span class="pill">Cabelo</span><span class="pill">Barba</span><span class="pill">Sobrancelha</span><span class="pill">R$ 50</span></div>
+    </div>
+    <button class="btn btn-gold" onclick="abrirAgendamento('Corte + Barba + Sobrancelha — Dia do Cliente')">Aproveitar oferta</button>
+  </div>
+  <div class="cards" style="margin-top:16px">
+    <article class="service"><h3>Corte + Pomada</h3><p>Na combinação, a sobrancelha sai com R$5 de desconto.</p><div class="price">Economize R$ 5</div></article>
+    <article class="service"><h3>Corte + 2 Pomadas</h3><p>Fechou o combo? A sobrancelha é grátis.</p><div class="price">Sobrancelha grátis</div></article>
+    <article class="service"><h3>Corte + Barba + Pomada</h3><p>Complete o visual e ganhe a sobrancelha.</p><div class="price">Sobrancelha grátis</div></article>
+  </div>
+</div>
+</section>
+
+<section id="horarios">
+<div class="container">
+  <div class="section-head"><div><div class="eyebrow">Quando atenderemos</div><h2>Horários</h2></div><p>Os horários são selecionados por hora. Consulte a disponibilidade antes de enviar seu agendamento.</p></div>
+  <div class="schedule">
+    <div class="day"><b>Segunda a sexta</b><span>17:00 — 21:00</span></div>
+    <div class="day"><b>Sábado</b><span>13:00 — 21:00</span></div>
+    <div class="day"><b>Domingo</b><span>13:00 — 21:00</span></div>
+    <div class="day"><b>Agendamento</b><span>Online pelo site</span></div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="container home">
+  <div class="home-box"><div class="eyebrow">Atendimento em casa</div><h3>Corte domiciliar</h3><p>Quer cortar o cabelo sem sair de casa? Solicite o atendimento domiciliar e acrescente apenas R$10 ao corte.</p><button class="btn btn-primary" onclick="abrirAgendamento('Corte domiciliar')">Agendar domiciliar</button></div>
+  <div class="home-box"><div class="eyebrow">Contato</div><h3>Fale com a Barbearia</h3><p>Após escolher dia, horário e serviço, o pedido é enviado para o WhatsApp da barbearia já organizado.</p><a class="btn btn-ghost" href="https://wa.me/5514998288661" target="_blank" rel="noopener">Abrir WhatsApp</a></div>
+</div>
+</section>
+</main>
+
+<footer>
+<div class="container footer-grid">
+  <div><div class="footer-brand">BARBEARIA ALESSANDRO</div><div>Seu estilo, seu horário.</div></div>
+  <div>WhatsApp: <strong style="color:white">(14) 99828-8661</strong></div>
+</div>
+</footer>
+
+<div class="floating"><button class="btn btn-primary" onclick="abrirAgendamento()">📅 Agendar agora</button></div>
+
+<div class="overlay" id="overlay" onclick="fecharFora(event)">
+  <div class="modal">
+    <div class="modal-head"><div><div class="eyebrow">Agendamento</div><h3>Escolha seu horário</h3><p>Preencha os dados e envie a solicitação pelo WhatsApp.</p></div><button class="close" onclick="fecharAgendamento()">×</button></div>
+    <div class="form-grid">
+      <div class="field"><label for="dia">Dia</label><select id="dia"></select></div>
+      <div class="field"><label for="hora">Horário</label><select id="hora"></select></div>
+      <div class="field full"><label for="servico">Serviço</label><select id="servico">
+        <option>Corte — R$ 25</option><option>Barba — R$ 20</option><option>Sobrancelha — R$ 15</option><option>Corte domiciliar — R$ 35</option><option>Pomada — R$ 30</option><option>Corte + Barba + Sobrancelha — Dia do Cliente — R$ 50</option>
+      </select></div>
+      <div class="field full"><label for="nome">Seu nome (opcional)</label><input class="input" id="nome" placeholder="Ex.: João"></div>
+    </div>
+    <div class="summary" id="resumo">Selecione o dia, horário e serviço.</div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="fecharAgendamento()">Cancelar</button><button class="btn btn-primary" onclick="enviarWhatsApp()">Enviar para o WhatsApp →</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
 <script>
-let cfg=null;
-const $=id=>document.getElementById(id);
-async function load(){cfg=await (await fetch('/api/config')).json(); render();}
-function money(v){return 'R$ '+Number(v).toFixed(0)}
-function render(){
- $('logo').textContent=cfg.barbearia.nome;
- $('phone').textContent=fmtPhone(cfg.barbearia.whatsapp);
- $('week').textContent=cfg.horarios.semana.inicio+' — '+cfg.horarios.semana.fim;
- $('weekend').textContent=cfg.horarios.fimSemana.inicio+' — '+cfg.horarios.fimSemana.fim;
- $('services').innerHTML=cfg.servicos.map(s=>`<div class="card"><h3>${s.nome}</h3><p>Atendimento com horário marcado.</p><div class="price">${money(s.preco)}</div></div>`).join('');
- $('promos').innerHTML=cfg.promocoes.map(p=>`<div style="padding:10px 0;border-bottom:1px solid #ffffff12"><b>${p.titulo}</b><p>${p.texto}</p></div>`).join('');
- fillForm(); updateHours();
+const WHATSAPP="5514998288661";
+const weekdays=["Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira"];
+const weekend=["Sábado","Domingo"];
+const dia=document.getElementById("dia"),hora=document.getElementById("hora"),servico=document.getElementById("servico"),nome=document.getElementById("nome"),resumo=document.getElementById("resumo"),overlay=document.getElementById("overlay");
+
+function horas(inicio,fim){let arr=[];for(let h=inicio;h<=fim;h++)arr.push(String(h).padStart(2,"0")+":00");return arr}
+function preencherDias(){
+  // Preenche a lista apenas quando necessário e preserva o dia já escolhido.
+  const diaAtual = dia.value;
+  if(dia.options.length === 0){
+    dia.innerHTML='<option value="">Selecione o dia</option>'+[...weekdays,...weekend].map(x=>`<option value="${x}">${x}</option>`).join("");
+  }
+  if(diaAtual){ dia.value = diaAtual; }
 }
-function fmtPhone(x){let n=x.replace(/^55/,'');return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`}
-function fillForm(){
- $('dia').innerHTML='<option value="">Selecione</option>'+['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'].map(x=>`<option>${x}</option>`).join('');
- $('servico').innerHTML='<option value="">Selecione</option>'+cfg.servicos.map(s=>`<option>${s.nome} — ${money(s.preco)}</option>`).join('');
+function atualizarHoras(){
+  // Guarda o dia antes de atualizar os horários para nunca perder a seleção.
+  const diaSelecionado = dia.value;
+  const fimSemana=weekend.includes(diaSelecionado);
+  const arr=horas(fimSemana?13:17,21);
+  hora.innerHTML='<option value="">Selecione o horário</option>'+arr.map(x=>`<option value="${x}">${x}</option>`).join("");
+  dia.value = diaSelecionado;
+  atualizarResumo();
 }
-function times(a,b){let x=[],[h1]=a.split(':').map(Number),[h2]=b.split(':').map(Number);for(let h=h1;h<=h2;h++)x.push(String(h).padStart(2,'0')+':00');return x}
-async function updateHours(){
- if(!$('dia').value){$('hora').innerHTML='<option>Selecione</option>';return}
- let wk=['Sábado','Domingo'].includes($('dia').value)?cfg.horarios.fimSemana:cfg.horarios.semana;
- let hours=times(wk.inicio,wk.fim);
- let taken=(cfg.agendamentos||[]).filter(a=>a.dia===$('dia').value&&a.status!=='cancelado').map(a=>a.hora);
- $('hora').innerHTML='<option value="">Selecione</option>'+hours.map(h=>`<option ${taken.includes(h)?'disabled':''} value="${h}">${h}${taken.includes(h)?' — ocupado':''}</option>`).join('');
- summary();
+function atualizarResumo(){
+  if(!dia.value||!hora.value||!servico.value){resumo.textContent="Selecione o dia, horário e serviço.";return}
+  resumo.innerHTML=`Agendamento: <b>${dia.value}</b> às <b>${hora.value}</b><br>Serviço: <b>${servico.value}</b>${nome.value?`<br>Nome: <b>${nome.value}</b>`:""}`;
 }
-function summary(){if($('dia').value&&$('hora').value&&$('servico').value)$('summary').innerHTML=`<b>${$('dia').value}</b> às <b>${$('hora').value}</b><br>${$('servico').value}`;else $('summary').textContent='Selecione os dados.'}
-function openModal(){ $('modal').classList.add('open'); fillForm(); updateHours() }
-function closeModal(){ $('modal').classList.remove('open') }
-async function agendar(){
- if(!$('dia').value||!$('hora').value||!$('servico').value)return alert('Selecione dia, horário e serviço.');
- const payload={nome:$('nome').value,dia:$('dia').value,hora:$('hora').value,servico:$('servico').value};
- const r=await fetch('/api/agendamentos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
- const j=await r.json(); if(!r.ok)return alert(j.error||'Não foi possível agendar.');
- const msg=`Olá, Barbearia Alessandro!%0A%0AQuero agendar:%0A📅 ${payload.dia}%0A🕐 ${payload.hora}%0A✂️ ${payload.servico}${payload.nome?`%0A👤 ${payload.nome}`:''}%0A%0AAguardo confirmação.`;
- window.open(`https://wa.me/${cfg.barbearia.whatsapp}?text=${msg}`,'_blank'); closeModal(); load();
+function abrirAgendamento(servicoInicial){
+  overlay.classList.add("open");document.body.style.overflow="hidden";
+  preencherDias();atualizarHoras();
+  if(servicoInicial){
+    const options=[...servico.options];
+    const idx=options.findIndex(o=>o.textContent.toLowerCase().startsWith(servicoInicial.toLowerCase()));
+    if(idx>=0)servico.selectedIndex=idx;
+    atualizarResumo();
+  }
 }
-$('dia').addEventListener('change',updateHours);$('hora').addEventListener('change',summary);$('servico').addEventListener('change',summary);$('nome').addEventListener('input',summary);
-load(); setInterval(load,5000);
-</script></body></html>
+function fecharAgendamento(){overlay.classList.remove("open");document.body.style.overflow=""}
+function fecharFora(e){if(e.target===overlay)fecharAgendamento()}
+function enviarWhatsApp(){
+  if(!dia.value||!hora.value||!servico.value){toast("Selecione dia, horário e serviço.");return}
+  const msg=`Olá, Barbearia Alessandro!%0A%0AQuero agendar um horário:%0A📅 Dia: ${dia.value}%0A🕐 Horário: ${hora.value}%0A✂️ Serviço: ${servico.value}${nome.value?`%0A👤 Nome: ${nome.value}`:""}%0A%0AAguardo a confirmação.`;
+  window.open(`https://wa.me/${WHATSAPP}?text=${msg}`,"_blank");
+}
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2200)}
+dia.addEventListener("change",atualizarHoras);hora.addEventListener("change",atualizarResumo);servico.addEventListener("change",atualizarResumo);nome.addEventListener("input",atualizarResumo);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharAgendamento()});
+window.addEventListener("scroll",()=>document.getElementById("header").classList.toggle("scrolled",scrollY>8));
+preencherDias();atualizarHoras();
+</script>
+</body>
+</html>
