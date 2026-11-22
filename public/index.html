@@ -219,16 +219,35 @@ function dinheiro(v){const n=Number(v);return Number.isFinite(n)?`R$ ${n.toFixed
 function telefone(v){return String(v||'').replace(/\D/g,'').replace(/^0(\d{10,})$/,'$1');}
 function esc(s){return String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
 function cfg(){return CONFIG.barbearia||PADRAO;}
-function horarios(){return CONFIG.horarios||PADRAO;}
+function horarios(){const h=CONFIG.horarios||{};return {semana:{...PADRAO.semana,...(h.semana||{})},fimSemana:{...PADRAO.fimSemana,...(h.fimSemana||{})}};}
 function formatDateLabel(iso){const d=new Date(iso+'T12:00:00');return new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'}).format(d).replace(/^./,c=>c.toUpperCase());}
-function isoHoje(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString().slice(0,10);}
+function dataLocalISO(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function isoHoje(){const d=new Date();d.setHours(0,0,0,0);return dataLocalISO(d);}
 function gerarDatas(){
   const out=[];const d=new Date();d.setHours(0,0,0,0);
-  for(let i=0;i<21;i++){const x=new Date(d);x.setDate(d.getDate()+i);if(x.getDay()!==0||true)out.push(x.toISOString().slice(0,10));}
+  for(let i=0;i<21;i++){const x=new Date(d);x.setDate(d.getDate()+i);out.push(dataLocalISO(x));}
   dia.innerHTML='<option value="">Selecione a data</option>'+out.map(x=>`<option value="${x}">${formatDateLabel(x)}</option>`).join('');
 }
 function horariosDoDia(date){const d=new Date(date+'T12:00:00');const h=(d.getDay()===0||d.getDay()===6)?horarios().fimSemana:horarios().semana;return h||{inicio:'17:00',fim:'21:00'};}
-function slots(h){const out=[];let [a,b]=[h.inicio,h.fim].map(x=>String(x||'').split(':').map(Number));if(!Number.isFinite(a)||!Number.isFinite(b))return out;for(let m=a*60;m<=b*60;m+=30)out.push(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'));return out;}
+function slots(h){
+  const out=[];
+  h=h||PADRAO.semana;
+  const paraMinutos=(valor)=>{
+    const partes=String(valor||'').split(':');
+    if(partes.length!==2)return NaN;
+    const horas=Number(partes[0]), minutos=Number(partes[1]);
+    if(!Number.isInteger(horas)||!Number.isInteger(minutos)||horas<0||horas>23||minutos<0||minutos>59)return NaN;
+    return horas*60+minutos;
+  };
+  const inicio=paraMinutos(h.inicio), fim=paraMinutos(h.fim);
+  if(!Number.isFinite(inicio)||!Number.isFinite(fim)||fim<=inicio)return out;
+  for(let m=inicio;m<fim;m+=30){
+    out.push(String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'));
+  }
+  return out;
+}
 function montarServicos(){
   const base=Array.isArray(CONFIG.servicos)?CONFIG.servicos:[];
   servico.innerHTML='<option value="">Selecione o serviço</option>'+base.map((s,i)=>`<option value="${esc(s.nome)}">${esc(s.nome)} — ${dinheiro(s.preco)}</option>`).join('');
@@ -237,45 +256,4 @@ function montarServicos(){
 function montarCards(){
   const lista=Array.isArray(CONFIG.servicos)?CONFIG.servicos:[];
   const descr={'Corte':'Seu corte do jeito que você gosta, com acabamento.','Barba':'Barba alinhada e acabamento para completar o visual.','Sobrancelha':'Acabamento limpo e alinhado.','Corte domiciliar':'Atendimento em casa com a taxa indicada.','Pomada':'Produto para finalizar e modelar seu penteado.','Pomada normal':'Produto para finalizar e modelar seu penteado.','Pomada promocional':'Oferta especial por tempo promocional.'};
-  $('servicesCards').innerHTML=lista.map((s,i)=>`<article class="service"><div class="icon">${icons[i%icons.length]}</div><h3>${esc(s.nome)}</h3><p>${esc(descr[s.nome]||'Serviço disponível na Barbearia Alessandro.')}</p><div class="price">${dinheiro(s.preco)}</div></article>`).join('');
-}
-function aplicarConfig(){
-  const b=cfg();WHATSAPP=telefone(b.whatsapp)||'5514998288661';
-  $('precoCorteHero').textContent=dinheiro(b.corte);$('precoBarbaHero').textContent=dinheiro(b.barba);$('precoSobrancelhaHero').textContent=dinheiro(b.sobrancelha);$('precoCorteDestaque').textContent=dinheiro(b.corte);$('precoCorteMini').textContent=dinheiro(b.corte);$('precoBarbaMini').textContent=dinheiro(b.barba);$('precoSobrancelhaMini').textContent=dinheiro(b.sobrancelha);$('precoDomiciliarMini').textContent='+'+dinheiro(b.domiciliar);$('domiciliarTexto').textContent=dinheiro(b.domiciliar);
-  $('footerWhatsApp').textContent=formatWhatsApp(WHATSAPP);$('whatsappLink').href='https://wa.me/'+WHATSAPP;
-  const ps=CONFIG.promocoes||[];const dc=ps.find(x=>/dia do cliente/i.test(x.titulo))||ps[0];
-  if(dc){$('diaClienteTexto').textContent=dc.texto||'';const mt=String(dc.texto||'').match(/R\$\s*[\d.,]+/);$('diaClientePreco').textContent=mt?mt[0]:'';const md=String(dc.texto||'').match(/^(.*?):/);$('diaClienteTitulo').textContent=md?md[1].toLowerCase():'terça e quinta';}
-  const other=ps.filter(x=>x!==dc);['promo1','promo2','promo3'].forEach((id,i)=>{const p=other[i];if(p){$(id+'Texto').textContent=p.texto||'';const m=String(p.texto||'').match(/R\$\s*[\d.,]+/);$(id+'Preco').textContent=/gr[aá]tis/i.test(p.texto||'')?'Sobrancelha grátis':m?m[0]:'';}});
-  const hs=horarios();$('horarioSemana').textContent=(hs.semana.inicio||'17:00')+' — '+(hs.semana.fim||'21:00');$('horarioSabado').textContent=(hs.fimSemana.inicio||'13:00')+' — '+(hs.fimSemana.fim||'21:00');$('horarioDomingo').textContent=$('horarioSabado').textContent;
-  montarServicos();montarCards();
-}
-function formatWhatsApp(n){const x=String(n).replace(/^55/,'');return x.length>=11?`(${x.slice(0,2)}) ${x.slice(2,7)}-${x.slice(7,11)}`:n;}
-async function carregarConfig(){try{const r=await fetch('/api/config',{cache:'no-store'});if(r.ok){const d=await r.json();CONFIG={...CONFIG,...d,barbearia:{...PADRAO,...(d.barbearia||{})},horarios:{...PADRAO.horarios,...(d.horarios||{})}};}}catch(e){console.warn(e)}aplicarConfig();}
-async function carregarDisponibilidade(){
-  const data=dia.value;if(!data){hora.innerHTML='<option value="">Selecione primeiro a data</option>';disponibilidade.style.display='none';return;}
-  const h=horariosDoDia(data);const arr=slots(h);hora.innerHTML='<option value="">Selecione o horário</option>'+arr.map(x=>`<option value="${x}">${x}</option>`).join('');
-  try{const r=await fetch('/api/availability?date='+encodeURIComponent(data),{cache:'no-store'});const j=await r.json();DISPONIBILIDADE=j;const booked=new Set(j.booked||[]);[...hora.options].forEach(o=>{if(o.value&&booked.has(o.value)){o.disabled=true;o.textContent=o.value+' — ocupado';}});disponibilidade.textContent=booked.size?`${booked.size} horário(s) já ocupado(s) nesta data. Escolha um horário livre.`:'Todos os horários exibidos estão disponíveis.';disponibilidade.style.display='block';}catch(e){DISPONIBILIDADE={};disponibilidade.style.display='none';}
-  atualizarResumo();
-}
-function atualizarResumo(){if(!dia.value||!hora.value||!servico.value){resumo.textContent='Selecione a data, horário e serviço.';return}resumo.innerHTML=`Agendamento: <b>${esc(formatDateLabel(dia.value))}</b> às <b>${esc(hora.value)}</b><br>Serviço: <b>${esc(servico.value)}</b>${nome.value?`<br>Nome: <b>${esc(nome.value)}</b>`:''}`;}
-function abrirAgendamento(servicoInicial){overlay.classList.add('open');document.body.style.overflow='hidden';gerarDatas();dia.value='';hora.innerHTML='<option value="">Selecione primeiro a data</option>';montarServicos();if(servicoInicial){const idx=[...servico.options].findIndex(o=>o.textContent.toLowerCase().startsWith(servicoInicial.toLowerCase()));if(idx>=0)servico.selectedIndex=idx;}atualizarResumo();}
-function fecharAgendamento(){overlay.classList.remove('open');document.body.style.overflow='';}
-function fecharFora(e){if(e.target===overlay)fecharAgendamento();}
-async function enviarWhatsApp(){
-  if(!dia.value||!hora.value||!servico.value){toast('Preencha data, horário e serviço.');return;}
-  if(hora.options[hora.selectedIndex]?.disabled){toast('Esse horário está ocupado. Escolha outro.');return;}
-  const cliente=nome.value.trim()||'Cliente';
-  try{
-    toast('Salvando agendamento...');
-    const r=await fetch('/api/agendamentos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:dia.value,hora:hora.value,servico:servico.value,nome:cliente})});
-    const j=await r.json().catch(()=>({}));if(!r.ok){toast(j.error||'Não foi possível salvar.');if(r.status===409)carregarDisponibilidade();return;}
-    const msg=`Olá, Barbearia Alessandro!\n\nQuero solicitar um agendamento:\n📅 ${formatDateLabel(dia.value)}\n🕐 ${hora.value}\n✂️ ${servico.value}\n👤 ${cliente}\n\nAguardo a confirmação.`;
-    window.location.href='https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(msg);
-  }catch(e){console.error(e);toast('Erro de conexão. Tente novamente.');}
-}
-function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600)}
-dia.addEventListener('change',carregarDisponibilidade);hora.addEventListener('change',atualizarResumo);servico.addEventListener('change',atualizarResumo);nome.addEventListener('input',atualizarResumo);document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharAgendamento()});window.addEventListener('scroll',()=>document.getElementById('header').classList.toggle('scrolled',scrollY>8));
-carregarConfig();
-</script>
-</body>
-</html>
+  $('servicesCards').innerHTML=lista.map((s,i)=>`<article class="service"><div class="icon">${icons[i%icons.length]}</div><h3>$
